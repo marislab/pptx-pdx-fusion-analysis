@@ -1,3 +1,11 @@
 data/*
-plot/*
+plots/*
 results/*
+R/*
+.DS_Store
+.Rhistory
+!R/venn_diagram.R
+!R/summary.R
+!R/driver_fusions.R
+!R/update_fusion_output.R
+!R/themes.R
