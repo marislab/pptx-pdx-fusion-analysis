@@ -25,8 +25,8 @@ This repo contains code for:
 Details
 =======
 
-update_fusion_output.R: Updates obsolete Hugo gene symbols in raw input data
-driver_fusions.R: Driver fusion results from cytogenetics/literature search
-venn_diagram.R: Creates venn diagram of driver fusions
-summary: Creates combined excel sheet with Fusion detection/filtering pipeline + driver fusions
+- update_fusion_output.R: Updates obsolete Hugo gene symbols in raw input data
+- driver_fusions.R: Driver fusion results from cytogenetics/literature search
+- venn_diagram.R: Creates venn diagram of driver fusions
+- summary: Creates combined excel sheet with Fusion detection/filtering pipeline + driver fusions
 
