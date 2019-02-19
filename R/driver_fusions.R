@@ -7,6 +7,7 @@
 
 library(tidyr)
 library(dplyr)
+library(reshape2)
 
 setwd('~/Projects/Maris-lab/PPTC_fusion_analysis/')
 
@@ -217,7 +218,7 @@ for(i in 1:nrow(df)){
 df[is.na(df)] <- NA
 df$Gene1_not_expressed[is.na(df$Gene1_not_expressed)] <- "Not Reported"
 df$Gene2_not_expressed[is.na(df$Gene2_not_expressed)] <- "Not Reported"
-separate.fusions <- df[(df$Gene1_not_expressed == "Not Reported" & df$Gene2_not_expressed == "Not Reported") | (df$Gene1_not_expressed == TRUE & df$Gene2_not_expressed == TRUE),]
+separate.fusions <- df[(df$Gene1_not_expressed %in% c(TRUE,"Not Reported") & df$Gene2_not_expressed %in% c(TRUE,"Not Reported")),]
 if(nrow(separate.fusions) > 0){
   print("Fusions to be separated")
   write.table(separate.fusions, file = 'results/Driver_Fusions_noExprReported.txt', quote = F, sep = "\t", row.names = F)
