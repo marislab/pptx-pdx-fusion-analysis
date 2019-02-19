@@ -1,7 +1,8 @@
 ################################################
 # Author: Komal S Rathi
 # Function: Create Venn from Tab1 and Tab2 of Excel Sheet
-# Date: 01/10/2018
+# Date: 02/18/2018
+# Step 4
 ################################################
 
 library(dplyr)
@@ -11,12 +12,12 @@ library(VennDiagram)
 library(ggplot2)
 library(extrafont)
 loadfonts()
-font_import()
+# font_import()
 setwd('~/Projects/Maris-lab/PPTC_fusion_analysis/')
 
 tab1 <- read.delim('results/Filtered_Annotated_Fusions.txt', stringsAsFactors = F)
 tab2 <- read.delim('results/DriverFusions.txt', stringsAsFactors = F)
-setdiff(tab2$Fused_Genes, tab1$Fused_Genes) # n = 8
+setdiff(tab2$Fused_Genes, tab1$Fused_Genes) # n = 4
 
 # venn diagram 
 tab1$Fusion_Type <- NULL
