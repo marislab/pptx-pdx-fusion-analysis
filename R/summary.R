@@ -234,7 +234,7 @@ for(i in 1:nrow(df)){
 df[is.na(df)] <- NA
 df$Gene1_not_expressed[is.na(df$Gene1_not_expressed)] <- "Not Reported"
 df$Gene2_not_expressed[is.na(df$Gene2_not_expressed)] <- "Not Reported"
-separate.fusions <- df[(df$Gene1_not_expressed == "Not Reported" & df$Gene2_not_expressed == "Not Reported") | (df$Gene1_not_expressed == TRUE & df$Gene2_not_expressed == TRUE),]
+separate.fusions <- df[(df$Gene1_not_expressed %in% c(TRUE,"Not Reported") & df$Gene2_not_expressed %in% c(TRUE,"Not Reported")),]
 if(nrow(separate.fusions) > 0){
   print("Fusions to be separated")
   write.table(separate.fusions, file = 'results/Filtered_Annotated_Fusions_noExprReported.txt', quote = F, sep = "\t", row.names = F)
@@ -290,7 +290,7 @@ extab2 <- extab2 %>%
 extab2 <- unique(extab2[,c("Fused_Genes","Cosmic","TF","Kinase")])
 extab1 <- merge(extab1, extab2, by = 'Fused_Genes', all.x = T)
 extab1[is.na(extab1)] <- "No"
-# 2813
+# 2755
 colnames(extab1)[4] <- 'Method'
 nrow(extab1)
 write.table(extab1, file = 'results/Filtered_Annotated_Fusions.txt', quote = F, sep = "\t", row.names = F)
