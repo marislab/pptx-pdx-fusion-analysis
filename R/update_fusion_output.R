@@ -2,6 +2,7 @@
 # Author: Komal S Rathi
 # Function: Update gene symbols in Fusion output
 # Date: 01/08/2019
+# Step 1
 ################################################
 
 setwd('~/Projects/Maris-lab/PPTC_fusion_analysis/')
@@ -50,14 +51,14 @@ cm$GeneA <- gsub('-.*','',cm$Key.translocations)
 cm$GeneB <- gsub('.*-','',cm$Key.translocations)
 
 # literature genes
-lit.genes <- read.delim('data/2019-01-09-driver-fusions.txt', stringsAsFactors = F)
+lit.genes <- read.delim('data/2019-02-14-driver-fusions.txt', stringsAsFactors = F)
 lit.genes <- lit.genes %>%
   group_by(Histology) %>%
   mutate(FusionPartner = strsplit(FusionPartner, ",")) %>%
   unnest(FusionPartner)
 
 # fix gene names from old to new
-dat <- read.delim('data/2019-01-03-Hugo-Symbols-edited.txt', stringsAsFactors = F)
+dat <- read.delim('data/2019-02-14-Hugo-Symbols-approved.txt', stringsAsFactors = F)
 dat <- unique(dat[,c('Approved.symbol','Previous.symbols')])
 genes.to.remove <- intersect(dat$Approved.symbol, dat$Previous.symbols)
 dat <- dat[-which(dat$Previous.symbols %in% genes.to.remove),]
@@ -90,7 +91,7 @@ lit.genes <- lit.genes %>%
   summarise(FusionPartner = paste(FusionPartner, collapse = ",")) %>%
   as.data.frame()
 lit.genes <- lit.genes[,c(1,3,2)]
-write.table(lit.genes, file = 'data/2019-01-09-driver-fusions_v2.txt', quote = F, sep = "\t", row.names = F)
+write.table(lit.genes, file = 'data/2019-02-14-driver-fusions_v2.txt', quote = F, sep = "\t", row.names = F)
 
 # replace in fusion catcher
 for(i in 1:nrow(fc)){
@@ -184,3 +185,27 @@ for(i in 1:nrow(cm)){
   }
 }
 write.table(cm, file = 'data/ALL_cytogenetics_translocations_CM_v2.txt', quote = F, sep = "\t", row.names = F)
+
+# replace symbols in rna matrix
+load('../PPTC/data/pedcbio/2019-02-14-PPTC_FPKM_matrix_withModelID-244.rda')
+rna.mat$gene_short_name <- as.character(rna.mat$gene_short_name)
+for(i in 1:nrow(rna.mat)){
+  print(i)
+  if(rna.mat[i,1] %in% dat$Previous.symbols == TRUE){
+    new.gene <- dat[dat$Previous.symbols %in% rna.mat[i,1],'Approved.symbol'] 
+    rna.mat[i,1] <- new.gene
+  }
+}
+save(rna.mat, file = 'data/2019-02-14-PPTC_FPKM_matrix_withModelID-244_v2.rda')
+
+# replace symbols in rna matrix (hg38)
+load('data/pptc_rnaseq_hg38_matrix.RData')
+rna.mat$gene_short_name <- as.character(rna.mat$gene_short_name)
+for(i in 1:nrow(rna.mat)){
+  print(i)
+  if(rna.mat[i,1] %in% dat$Previous.symbols == TRUE){
+    new.gene <- dat[dat$Previous.symbols %in% rna.mat[i,1],'Approved.symbol'] 
+    rna.mat[i,1] <- new.gene
+  }
+}
+save(rna.mat, file = 'data/pptc_rnaseq_hg38_matrix_v2.RData')
