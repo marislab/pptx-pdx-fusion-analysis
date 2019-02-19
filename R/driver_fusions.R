@@ -1,8 +1,8 @@
 ################################################
 # Author: Komal S Rathi
 # Function: Driver fusion results for cBio and paper main
-# Date: 12/18/2018
-# literature fusions 
+# Date: 02/18/2019
+# Step 2 
 ################################################
 
 library(tidyr)
@@ -11,7 +11,7 @@ library(dplyr)
 setwd('~/Projects/Maris-lab/PPTC_fusion_analysis/')
 
 # clinical data
-clin <- read.delim('data/2018-12-28-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
+clin <- read.delim('data/2019-02-09-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
 clin$RNA.human.bam.filename <- gsub('-R-human.bam$|-R_star_hg19_final.bam$|_star_hg19_final.bam$','', clin$RNA.human.bam.filename)
 clin <- clin[which(clin$RNA.Part.of.PPTC == "yes"),]
 clin <- clin[,c("Model","Histology.Detailed","Histology.Broad","RNA.human.bam.filename")]
@@ -39,14 +39,15 @@ rm(mc2)
 
 # chelsea
 cm <- read.delim('data/ALL_cytogenetics_translocations_CM_v2.txt', stringsAsFactors = F)
-cm <- unique(cm[,c('Xenograft.ID','Key.translocations','Search_Type')])
 cm <- cm[which(cm$Search_Type == "Fusion"),]
-setdiff(cm$Xenograft.ID, clin$Model)
+cm$Key.translocations <- paste0(cm$GeneA,'--',cm$GeneB)
+cm <- unique(cm[,c('Xenograft.ID','Key.translocations','Search_Type')])
+setdiff(cm$Xenograft.ID, clin$Model) # 11
 cm <- merge(cm, clin, by.x = 'Xenograft.ID', by.y = 'Model')
 colnames(cm)[1] <- 'Model'
 colnames(cm)[2] <- 'Fusion'
 cm$Frame <- "in-frame"
-cm$Fusion <- gsub('-','_',cm$Fusion)
+cm$Fusion <- gsub('--','_',cm$Fusion)
 cm$Method <- 'Cytogenetics'
 
 # total (list #1)
@@ -122,7 +123,7 @@ if(length(setdiff(all.callers$Sample, clin$RNA.human.bam.filename)) == 0){
 
 # get literature genes
 # these are both 5' and 3' genes but includes frameshift
-lit.genes <- read.delim('data/2019-01-09-driver-fusions.txt', stringsAsFactors = F)
+lit.genes <- read.delim('data/2019-02-14-driver-fusions_v2.txt', stringsAsFactors = F)
 lit.genes <- lit.genes[!is.na(lit.genes$FusionPartner),]
 for(i in 1:nrow(lit.genes)){
   genes.to.search <- lit.genes[i,2]
@@ -164,6 +165,67 @@ final <- unique(final)
 # remove read-throughs
 final <- final[-which(final$Fusion %in% rts),]
 
+####### separate low expressing fusions and fusions where gene expression not reported
+load('data/pptc_rnaseq_hg38_matrix_v2.RData')
+rna.mat$not_expressed <- apply(rna.mat[,2:ncol(rna.mat)], 1, FUN = function(x) all(x < 1))
+df <- final
+df <- cbind(colsplit(df$Fusion, pattern = '_', names = c("Gene1","Gene2")), df)
+genes <- unique(c(df$Gene1, df$Gene2))
+to.check <- setdiff(genes, rna.mat$gene_short_name) # 9
+rna.mat <- rna.mat[which(rna.mat$gene_short_name %in% genes),]
+rna.mat <- melt(rna.mat)
+rna.mat <- merge(rna.mat, clin[,c("Model","Histology.Broad")], by.x = 'variable', by.y = "Model")
+rna.mat$Histology.Broad <- as.character(rna.mat$Histology.Broad)
+
+# now add filter
+df$Gene1_model <- NA
+df$Gene1_hist_mean <- NA
+df$Gene1_mean <- NA
+df$Gene1_expr <- NA
+df$Gene2_model <- NA
+df$Gene2_hist_mean <- NA
+df$Gene2_mean <- NA
+df$Gene2_expr <- NA
+df$Gene1_not_expressed <- NA
+df$Gene2_not_expressed <- NA
+for(i in 1:nrow(df)){
+  print(i)
+  genea <- df[i,'Gene1']
+  geneb <- df[i,'Gene2']
+  model <- df[i,'Model']
+  hist <- df[i,'Histology.Broad']
+  hist <- gsub(' [(].*','', hist)
+  genea.expr <- unique(rna.mat[which(rna.mat$gene_short_name == genea),'not_expressed'])
+  geneb.expr <- unique(rna.mat[which(rna.mat$gene_short_name == geneb),'not_expressed'])
+  genea.val <- rna.mat[which(rna.mat$variable %in% model & rna.mat$gene_short_name == genea),'value']
+  geneb.val <- rna.mat[which(rna.mat$variable %in% model & rna.mat$gene_short_name == geneb),'value']
+  genea.hist.mean <- mean(rna.mat[which(rna.mat$gene_short_name == genea & rna.mat$Histology.Broad == hist),'value'])
+  geneb.hist.mean <- mean(rna.mat[which(rna.mat$gene_short_name == geneb & rna.mat$Histology.Broad == hist),'value'])
+  genea.mean <- mean(rna.mat[which(rna.mat$gene_short_name == genea),'value'])
+  geneb.mean <- mean(rna.mat[which(rna.mat$gene_short_name == geneb),'value'])
+  df[i,'Gene1_not_expressed'] <- ifelse(length(genea.expr) == 0, NA, genea.expr)
+  df[i,'Gene1_model'] <- ifelse(is.na(genea.val) || length(genea.val) == 0, NA, genea.val)
+  df[i,'Gene1_hist_mean'] <- ifelse(is.na(genea.hist.mean) || length(genea.hist.mean) == 0, NA, genea.hist.mean)
+  df[i,'Gene1_mean'] <- ifelse(is.na(genea.mean) || length(genea.mean) == 0, NA, genea.mean)
+  df[i,'Gene1_expr'] <- ifelse(df[i,'Gene1_model'] < df[i,'Gene1_mean'],'Decreased',ifelse(df[i,'Gene1_model'] == df[i,'Gene1_mean'], 'Same','Increased'))
+  df[i,'Gene2_not_expressed'] <- ifelse(length(geneb.expr) == 0, NA, geneb.expr)
+  df[i,'Gene2_model'] <- ifelse(is.na(geneb.val) || length(geneb.val) == 0, NA, geneb.val)
+  df[i,'Gene2_hist_mean'] <- ifelse(is.na(geneb.hist.mean) || length(geneb.hist.mean) == 0, NA, geneb.hist.mean)
+  df[i,'Gene2_mean'] <- ifelse(is.na(geneb.mean) || length(geneb.mean) == 0, NA, geneb.mean)
+  df[i,'Gene2_expr'] <- ifelse(df[i,'Gene2_model'] < df[i,'Gene2_mean'],'Decreased',ifelse(df[i,'Gene2_model'] == df[i,'Gene2_mean'], 'Same','Increased'))
+}
+df[is.na(df)] <- NA
+df$Gene1_not_expressed[is.na(df$Gene1_not_expressed)] <- "Not Reported"
+df$Gene2_not_expressed[is.na(df$Gene2_not_expressed)] <- "Not Reported"
+separate.fusions <- df[(df$Gene1_not_expressed == "Not Reported" & df$Gene2_not_expressed == "Not Reported") | (df$Gene1_not_expressed == TRUE & df$Gene2_not_expressed == TRUE),]
+if(nrow(separate.fusions) > 0){
+  print("Fusions to be separated")
+  write.table(separate.fusions, file = 'results/Driver_Fusions_noExprReported.txt', quote = F, sep = "\t", row.names = F)
+  df <- df[-which(df$Fusion %in% separate.fusions$Fusion),]
+}
+final <- final[which(final$Fusion %in% df$Fusion),]
+####### separate low expressing fusions and fusions where gene expression not reported
+
 # format for cBio
 final <- final %>% 
   group_by(Fusion, Model, Frame, Histology.Broad, Histology.Broad.Label) %>%
@@ -198,32 +260,31 @@ genes <- unique(genes[,2:1])
 final <- merge(final, genes, by.x = 'Hugo_Symbol',by.y = 'HUGO_GENE_SYMBOL', all.x = TRUE)
 colnames(final)[11] <- 'Entrez_Gene_Id'
 unique(final[is.na(final$Entrez_Gene_Id),'Hugo_Symbol'])
-final$Entrez_Gene_Id[final$Hugo_Symbol == "C11orf95"] <- 65998
 final$Entrez_Gene_Id[final$Hugo_Symbol == "CFAP300"] <- 85016
 final <- unique(final[,c("Hugo_Symbol","Entrez_Gene_Id","Center","Tumor_Sample_Barcode","Fusion","DNA_support","RNA_support","Method","Frame","Histology.Broad","Histology.Broad.Label")])
+for.driver.fusion <- final
 final$Fusion <- gsub("_","-",final$Fusion)
 
 # for cbio 
 final[is.na(final)] <- ''
 final <- final[-which(final$Fusion %in% c("SRP9-EPHX1")),]
 intersect(final$Fusion, gsub('_','-',rts))
-dim(unique(final[,c('Tumor_Sample_Barcode','Fusion')])) # 159
+dim(unique(final[,c('Tumor_Sample_Barcode','Fusion')])) # 166
+final$Histology.Broad.Label <- NULL
+write.table(final, file = '~/Projects/Maris-lab/PPTC/data/pedcbio/pptc/data_fusions.txt', quote = F, sep = "\t", row.names = F)
 
 # driver-fusions
-driver.fusions <- final[,c("Fusion","Tumor_Sample_Barcode","Histology.Broad.Label","Method","Frame")]
+driver.fusions <- for.driver.fusion[,c("Fusion","Tumor_Sample_Barcode","Histology.Broad.Label","Method","Frame")]
+driver.fusions <- driver.fusions[-which(driver.fusions$Fusion %in% c("SRP9_EPHX1")),]
 colnames(driver.fusions) <- c("Fused_Genes","Model","Histology.Broad.Label","Method","Fusion_Type")
-driver.fusions$Fused_Genes <- sub('-','--',driver.fusions$Fused_Genes)
+driver.fusions$Fused_Genes <- sub('_','--',driver.fusions$Fused_Genes)
 driver.fusions$Cytogenetics <- 'No'
 driver.fusions[grep('Cytogenetics', driver.fusions$Method),'Cytogenetics'] <- "Yes"
 write.table(driver.fusions, file = 'results/DriverFusions.txt', quote = F, sep = "\t", row.names = F)
 
-# for cbio
-final$Histology.Broad.Label <- NULL
-write.table(final, file = '~/Projects/Maris-lab/PPTC/data/pedcbio/pptc/data_fusions.txt', quote = F, sep = "\t", row.names = F)
-
-##### for JLH ##### 
-# fusions (n = 95)
-clin <- read.delim('data/2018-12-28-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
+# driver fusions collapsed
+# fusions (n = 101)
+clin <- read.delim('data/2019-02-09-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
 clin$EXPRESSION <- clin$RNA.Part.of.PPTC
 clin <- clin[which(clin$EXPRESSION == "yes"),]
 ct <- plyr::count(clin$Histology.Detailed)
