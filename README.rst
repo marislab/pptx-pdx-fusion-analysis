@@ -4,8 +4,8 @@
 PPTC PDX Fusion Pipeline
 ************************
 
-:authors: Komal S Rathi
-:contact: Komal Rathi (rathik@email.chop.edu)
+:authors: Komal S. Rathi
+:contact: Komal S. Rathi (rathik@email.chop.edu)
 :organization: CHOP
 :status: Completed
 :date: |date|
