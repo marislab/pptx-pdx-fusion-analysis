@@ -9,3 +9,4 @@ R/*
 !R/driver_fusions.R
 !R/update_fusion_output.R
 !R/themes.R
+!R/get_data.R
