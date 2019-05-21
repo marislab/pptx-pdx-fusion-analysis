@@ -10,3 +10,4 @@ R/*
 !R/update_fusion_output.R
 !R/themes.R
 !R/get_data.R
+!R/annotate_fusions.R
