@@ -16,7 +16,7 @@ loadfonts()
 setwd('~/Projects/Maris-lab/PPTC_fusion_analysis/')
 
 tab1 <- read.delim('results/Filtered_Annotated_Fusions.txt', stringsAsFactors = F)
-tab2 <- read.delim('results/DriverFusions.txt', stringsAsFactors = F)
+tab2 <- read.delim('results/Driver_Fusions.txt', stringsAsFactors = F)
 setdiff(tab2$Fused_Genes, tab1$Fused_Genes) # n = 4
 
 # venn diagram 

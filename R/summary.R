@@ -11,6 +11,7 @@ library(dplyr)
 library(RColorBrewer)
 library(tidyr)
 library(xlsx)
+detach('package:plyr')
 
 setwd('~/Projects/Maris-lab/PPTC_fusion_analysis/')
 source('~/Projects/Maris-lab/PPTC/R/pubTheme.R')
@@ -59,13 +60,13 @@ defuse.total <- unique(defuse[,c('Fused_Genes','Sample','Caller','Fusion_Type')]
 
 # merge all data
 all.callers <- rbind(fc.total, sf.total, soapfuse.total, defuse.total)
-all.callers$Sample <- gsub('-R-human$|-R$|','',all.callers$Sample)
+all.callers$Sample <- gsub('-R-human$|-R$','',all.callers$Sample)
 
 # remove the samples that we don't need
-clin <- read.delim('data/2019-02-09-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
+clin <- read.delim('data/2019-07-25-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
 clin <- clin[which(clin$RNA.Part.of.PPTC == "yes"),]
 clin <- clin[,c('RNA.human.bam.filename','Model','Histology.Broad')]
-clin$RNA.human.bam.filename <- gsub('-R-human.bam$|-R_star_hg19_final.bam$|_star_hg19_final.bam$|-human.bam$','', clin$RNA.human.bam.filename)
+clin$RNA.human.bam.filename <- gsub('-R.human.bam$|-R-human.bam$|-R_star_hg19_final.bam$|_star_hg19_final.bam$|-human.bam$','', clin$RNA.human.bam.filename)
 
 # histology labels
 hist.dt.ct <- unique(clin[,c('Histology.Broad','Model')])
@@ -155,7 +156,7 @@ length(unique(total$Fused_Genes))
 # add back MLL fusions by Chelsea, 
 # Pubmed fusions by Maria and 
 # literature fusions by Jo Lynne (generated using driver_fusions.R)
-drivers <- read.delim('results/DriverFusions.txt', stringsAsFactors = F)
+drivers <- read.delim('results/Driver_Fusions.txt', stringsAsFactors = F)
 drivers <- drivers[,c("Fused_Genes","Model")]
 drivers <- merge(drivers, clin, by = 'Model')
 drivers$RNA.human.bam.filename <- NULL
@@ -244,7 +245,7 @@ total <- total[which(total$Fused_Genes %in% df$Fused_Genes),]
 ####### separate low expressing fusions and fusions where gene expression not reported 
 
 # add Cytogenetics info
-cyto <- read.delim('results/DriverFusions.txt', stringsAsFactors = F)
+cyto <- read.delim('results/Driver_Fusions.txt', stringsAsFactors = F)
 cyto <- unique(cyto[which(cyto$Cytogenetics == "Yes"),1:2])
 cyto$Cytogenetics <- "Yes"
 
@@ -296,7 +297,7 @@ nrow(extab1)
 write.table(extab1, file = 'results/Filtered_Annotated_Fusions.txt', quote = F, sep = "\t", row.names = F)
 
 # write to excel
-tab1 <- read.delim('results/DriverFusions.txt', stringsAsFactors = F)
+tab1 <- read.delim('results/Driver_Fusions.txt', stringsAsFactors = F)
 tab2 <- read.delim('results/Filtered_Annotated_Fusions.txt', stringsAsFactors = F)
 write.xlsx(x = tab1, file = 'results/FusionTable.xlsx', sheetName = "Driver_Fusions", row.names = F)
 write.xlsx(x = tab2, file = 'results/FusionTable.xlsx', sheetName = "Filtered_Annotated_Fusions", row.names = F, append = TRUE)
@@ -307,10 +308,10 @@ write.xlsx(x = tab2, file = 'results/FusionTable.xlsx', sheetName = "Filtered_An
 total$geneA <- NULL
 total$geneB <- NULL
 
-clin <- read.delim('data/2019-02-09-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
+clin <- read.delim('data/2019-07-25-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
 clin <- clin[which(clin$RNA.Part.of.PPTC == "yes"),]
 clin <- clin[,c('RNA.human.bam.filename','Model','Histology.Detailed')]
-clin$RNA.human.bam.filename <- gsub('-R-human.bam$|-R_star_hg19_final.bam$|_star_hg19_final.bam$','', clin$RNA.human.bam.filename)
+clin$RNA.human.bam.filename <- gsub('-R.human.bam$|-R-human.bam$|-R_star_hg19_final.bam$|_star_hg19_final.bam$','', clin$RNA.human.bam.filename)
 
 # histology detailed labels
 hist.ct <- unique(clin[,c('Histology.Detailed','Model')])

@@ -11,7 +11,7 @@ library(xlsx)
 setwd('~/Projects/Maris-lab/PPTC_fusion_analysis/')
 
 # annotate further on FPKM
-clin <- read.delim('data/2019-02-09-pdx-clinical-final-for-paper.txt')
+clin <- read.delim('data/2019-07-25-pdx-clinical-final-for-paper.txt')
 load('data/pptc_rnaseq_hg38_matrix_v2.RData')
 rna.mat$not_expressed <- apply(rna.mat[,2:ncol(rna.mat)], 1, FUN = function(x) all(x < 1))
 df <- read.delim('results/Filtered_Annotated_Fusions.txt', stringsAsFactors = F)
@@ -65,5 +65,5 @@ df$Gene1_not_expressed[is.na(df$Gene1_not_expressed)] <- "Not Reported"
 df$Gene2_not_expressed[is.na(df$Gene2_not_expressed)] <- "Not Reported"
 
 # filters
-write.table(df, 'results/Filtered_Annotated_Fusions_ExprAnnotated.txt', quote = F, sep = "\t", row.names = F)
-write.xlsx(x = df, file = 'results/FusionTable.xlsx', sheetName = "Filtered_Annotated_Fusions_ExprAnnotated", row.names = F, append = TRUE)
+write.table(df, 'results/Filtered_Annotated_Fusions_Expr', quote = F, sep = "\t", row.names = F)
+write.xlsx(x = df, file = 'results/FusionTable.xlsx', sheetName = "Filtered_Annotated_Fusions_Expr", row.names = F, append = TRUE)

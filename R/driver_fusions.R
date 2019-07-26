@@ -8,12 +8,13 @@
 library(tidyr)
 library(dplyr)
 library(reshape2)
+detach('package:plyr')
 
 setwd('~/Projects/Maris-lab/PPTC_fusion_analysis/')
 
 # clinical data
-clin <- read.delim('data/2019-02-09-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
-clin$RNA.human.bam.filename <- gsub('-R-human.bam$|-R_star_hg19_final.bam$|_star_hg19_final.bam$','', clin$RNA.human.bam.filename)
+clin <- read.delim('data/2019-07-25-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
+clin$RNA.human.bam.filename <- gsub('-R.human.bam$|-R-human.bam$|-R_star_hg19_final.bam$|_star_hg19_final.bam$','', clin$RNA.human.bam.filename)
 clin <- clin[which(clin$RNA.Part.of.PPTC == "yes"),]
 clin <- clin[,c("Model","Histology.Detailed","Histology.Broad","RNA.human.bam.filename")]
 clin.ct <- plyr::count(clin$Histology.Broad)
@@ -115,6 +116,7 @@ rm(fc.total, fc, fc.rt, sf.total, sf, sf.rt,
    soapfuse.total, soapfuse, defuse.total, defuse)
 to.remove <- setdiff(all.callers$Sample, clin$RNA.human.bam.filename)
 all.callers <- all.callers[-which(all.callers$Sample %in% to.remove),]
+length(unique(all.callers$Sample)) # 244
 all.callers$Fused_Genes <- gsub('--','_',all.callers$Fused_Genes)
 if(length(setdiff(all.callers$Sample, clin$RNA.human.bam.filename)) == 0){
   all.callers <- merge(all.callers, clin, by.x = 'Sample', by.y = 'RNA.human.bam.filename')
@@ -281,11 +283,11 @@ colnames(driver.fusions) <- c("Fused_Genes","Model","Histology.Broad.Label","Met
 driver.fusions$Fused_Genes <- sub('_','--',driver.fusions$Fused_Genes)
 driver.fusions$Cytogenetics <- 'No'
 driver.fusions[grep('Cytogenetics', driver.fusions$Method),'Cytogenetics'] <- "Yes"
-write.table(driver.fusions, file = 'results/DriverFusions.txt', quote = F, sep = "\t", row.names = F)
+write.table(driver.fusions, file = 'results/Driver_Fusions.txt', quote = F, sep = "\t", row.names = F)
 
 # driver fusions collapsed
-# fusions (n = 101)
-clin <- read.delim('data/2019-02-09-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
+# fusions (n = 99)
+clin <- read.delim('data/2019-07-25-pdx-clinical-final-for-paper.txt', stringsAsFactors = F)
 clin$EXPRESSION <- clin$RNA.Part.of.PPTC
 clin <- clin[which(clin$EXPRESSION == "yes"),]
 ct <- plyr::count(clin$Histology.Detailed)
